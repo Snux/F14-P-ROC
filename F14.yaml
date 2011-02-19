@@ -307,17 +307,17 @@ PRLamps:
         number: L57
     landing:
         number: L58
-    centre3:
+    target3:
         number: L61
-    centre2:
+    target2:
         number: L62
-    centre1:
+    target1:
         number: L63
-    centre4:
+    target4:
         number: L64
-    centre5:
+    target5:
         number: L65
-    centre6:
+    target6:
         number: L66
     release:
         number: L67

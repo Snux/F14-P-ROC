@@ -86,7 +86,8 @@ class Attract(procgame.game.Mode):
             self.change_lampshow()
 	
 	def mode_stopped(self):
-		self.game.lamps.startButton.disable()
+            self.game.lampctrl.stop_show()
+                
 
 	def sw_startButton_active(self, sw):
 		self.game.modes.remove(self)

@@ -25,6 +25,7 @@ from random import *
 from procgame import *
 import pinproc
 import trough
+import ramps
 import attract
 
 import locale
@@ -34,7 +35,24 @@ lampshow_files = ["./lamps/f14fireleft.lampshow", \
                   "./lamps/f14fireright.lampshow", \
                   "./lamps/sweepleftright.lampshow", \
                  ]
-                 
+
+class scoreMode(procgame.game.Mode):
+
+        def __init__(self, game):
+            super(scoreMode,self).__init__(game=game, priority=2)
+
+        def mode_started(self):
+            for switch in self.game.switches:
+		if switch.name.find('target', 0) != -1:
+		       self.add_switch_handler(name=switch.name, event_type='active', \
+				delay=None, handler=self.plus100)
+
+        def plus100(self,sw):
+            print sw.name
+            self.game.score(100)
+            self.game.lamps[sw.name].enable()
+
+            
 class BaseGameMode(procgame.game.Mode):
 	"""A mode that runs whenever the game is in progress."""
 	def __init__(self, game):
@@ -50,11 +68,7 @@ class BaseGameMode(procgame.game.Mode):
 		if self.game.trough.is_full():
 			self.game.end_ball()
 	
-	#def sw_lowerRightPopper_active_for_200ms(self, sw):
-		#self.game.coils.lowerRightPopper.pulse()
-	
-	#def sw_upperRightPopper_active_for_200ms(self, sw):
-		#self.game.coils.upperRightPopper.pulse()
+
 
 
 class TomcatGame(procgame.game.BasicGame):
@@ -79,7 +93,9 @@ class TomcatGame(procgame.game.BasicGame):
 		
 		self.trough = trough.Trough(game=self)
 		self.base_game_mode = BaseGameMode(game=self)
+                self.ramp = ramps.Ramps(game=self)
                 self.attract_mode = attract.Attract(game=self)
+                self.score_mode = scoreMode(game=self)
                 self.reset()
 	
 	# GameController Methods
@@ -88,8 +104,16 @@ class TomcatGame(procgame.game.BasicGame):
 		super(TomcatGame,self).reset()
 		
 		self.modes.add(self.trough)
+                self.modes.add(self.ramp)
+                self.modes.add(self.score_mode)
 		self.modes.add(self.attract_mode)
-	
+
+        def enable_flippers(self,enable):
+            if enable:
+                self.coils.flipperEnable.pulse(0)
+            else:
+                self.coils.flipperEnable.disable()
+            
 	def start_ball(self):
 		super(TomcatGame, self).start_ball()
 	
