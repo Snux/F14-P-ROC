@@ -20,10 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-#from procgame import dmd
-#import procgame
-#import procgame.lamps
+
 from procgame import *
+from procgame.dmd import font_named
 from random import *
 
 
@@ -90,15 +89,37 @@ class Attract(game.Mode):
             self.takeoff_layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=2)
 	    self.f14_splash_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14bw2.dmd').frames[0])
             self.f14_sunset_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14sun.dmd').frames[0])
-            #self.f14_layer = dmd.TextLayer(128/2, 7, dmd.Font("../shared/dmd/Jazz18-18px.dmd"), "center", opaque=True).set_text("Tomcat 2.0")
-            self.f14_layer = dmd.TextLayer(128/2, 7, self.font_jazz18, "center", opaque=True).set_text("Tomcat 2.0")
+            self.f14_layer = dmd.TextLayer(128/2, 7, font_named("Jazz18-18px.dmd"), "center", opaque=True).set_text("Tomcat 2.0")
             self.press_start_layer = dmd.TextLayer(128/2, 7, dmd.Font("../shared/dmd/Font09Bx7.dmd"), "center", opaque=True).set_text("PRESS START")
-            
+            gen = dmd.MarkupFrameGenerator()
+            credits_frame = gen.frame_for_markup("""
 
-            #self.credits_layer = dmd.PanningLayer(width=128, height=32, frame=credits_frame, origin=(0,0), translate=(0,1), bounce=False)
+
+#CREDITS#
+
+[Rules and Coding:]
+[Mark Sunnucks]
+
+[Tools and Framework:]
+[Adam Preble]
+
+[P.ROC:]
+[www.]
+[pinballcontrollers.]
+[com]
+
+[pyprocgame:]
+[pyprocgame.pindev.org]
+
+[Special thanks to:]
+[Gerry Stellenberg]
+""")
+
+            self.credits_layer = dmd.PanningLayer(width=128, height=32, frame=credits_frame, origin=(0,0), translate=(0,1), bounce=False)
+
             script = [{'seconds':5.0, 'layer':self.f14_splash_layer},
 		          {'seconds':3.0, 'layer':self.f14_layer},
-		#	  {'seconds':5.0, 'layer':self.f14_ink_layer},
+			  {'seconds':15.0, 'layer':self.credits_layer},
                           {'seconds':5.0, 'layer':self.f14_sunset_layer},
                           {'seconds':5.0, 'layer':self.press_start_layer},
                           {'seconds':7.5, 'layer':self.takeoff_layer}]

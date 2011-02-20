@@ -20,24 +20,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import procgame
-import pinproc
 from procgame import *
-#from random import *
-import string
-import time
-import locale
-import math
-#import copy
-#import yaml
+from procgame.dmd import font_named
+
+import pinproc
 import trough
 import ramps
 import attract
 
 import locale
 locale.setlocale(locale.LC_ALL, "") # Used to put commas in the score.
-
 fnt_path = "/shared/dmd/"
+font_14x10 = font_named('Font14x10.dmd')
+font_jazz18 = font_named("Jazz18-18px.dmd")
+
+
 
 lampshow_files = ["./lamps/sweepleftright.lampshow", \
 #                  "./lamps/f14fireright.lampshow", \
@@ -61,7 +58,7 @@ class scoreMode(game.Mode):
             self.game.lamps[sw.name].enable()
 
             
-class BaseGameMode(procgame.game.Mode):
+class BaseGameMode(game.Mode):
 	"""A mode that runs whenever the game is in progress."""
 	def __init__(self, game):
 		super(BaseGameMode, self).__init__(game=game, priority=1)
@@ -87,8 +84,8 @@ class TomcatGame(game.BasicGame):
 	def __init__(self):
 		super(TomcatGame, self).__init__(pinproc.MachineTypeWPC)
 		self.load_config('F14.yaml')
-		self.lampctrl = procgame.lamps.LampController(self)
-                #self.tiny7 = font_named("04B-03-7px.dmd")
+		self.lampctrl = lamps.LampController(self)
+                tiny7 = dmd.Font(fnt_path+"04B-03-7px.dmd")
                 font_jazz18 = dmd.Font(fnt_path+"Jazz18-18px.dmd")
                 font_14x10 = dmd.Font(fnt_path+"Font14x10.dmd")
                 font_18x12 = dmd.Font(fnt_path+"Font18x12.dmd")
