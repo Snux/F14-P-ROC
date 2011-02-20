@@ -21,9 +21,15 @@
 # THE SOFTWARE.
 
 import procgame
-from random import *
-from procgame import *
 import pinproc
+from procgame import *
+#from random import *
+import string
+import time
+import locale
+import math
+#import copy
+#import yaml
 import trough
 import ramps
 import attract
@@ -31,12 +37,14 @@ import attract
 import locale
 locale.setlocale(locale.LC_ALL, "") # Used to put commas in the score.
 
-lampshow_files = ["./lamps/f14fireleft.lampshow", \
-                  "./lamps/f14fireright.lampshow", \
-                  "./lamps/sweepleftright.lampshow", \
+fnt_path = "/shared/dmd/"
+
+lampshow_files = ["./lamps/sweepleftright.lampshow", \
+#                  "./lamps/f14fireright.lampshow", \
+#                  "./lamps/sweepleftright.lampshow", \
                  ]
 
-class scoreMode(procgame.game.Mode):
+class scoreMode(game.Mode):
 
         def __init__(self, game):
             super(scoreMode,self).__init__(game=game, priority=2)
@@ -71,7 +79,7 @@ class BaseGameMode(procgame.game.Mode):
 
 
 
-class TomcatGame(procgame.game.BasicGame):
+class TomcatGame(game.BasicGame):
 	
 	trough = None
 	base_game_mode = None
@@ -80,6 +88,13 @@ class TomcatGame(procgame.game.BasicGame):
 		super(TomcatGame, self).__init__(pinproc.MachineTypeWPC)
 		self.load_config('F14.yaml')
 		self.lampctrl = procgame.lamps.LampController(self)
+                #self.tiny7 = font_named("04B-03-7px.dmd")
+                font_jazz18 = dmd.Font(fnt_path+"Jazz18-18px.dmd")
+                font_14x10 = dmd.Font(fnt_path+"Font14x10.dmd")
+                font_18x12 = dmd.Font(fnt_path+"Font18x12.dmd")
+                font_07x4 = dmd.Font(fnt_path+"Font07x4.dmd")
+                font_07x5 = dmd.Font(fnt_path+"Font07x5.dmd")
+                font_09Bx7 = dmd.Font(fnt_path+"Font09Bx7.dmd")
 	        # Register lampshow files
 		self.lampshow_keys = []
 		key_ctr = 0
@@ -90,13 +105,14 @@ class TomcatGame(procgame.game.BasicGame):
 			key_ctr += 1
 		pass
 
-		
 		self.trough = trough.Trough(game=self)
 		self.base_game_mode = BaseGameMode(game=self)
                 self.ramp = ramps.Ramps(game=self)
                 self.attract_mode = attract.Attract(game=self)
                 self.score_mode = scoreMode(game=self)
                 self.reset()
+
+
 	
 	# GameController Methods
 	

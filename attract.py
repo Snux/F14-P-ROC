@@ -20,11 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import procgame.game
-import procgame.lamps
+#from procgame import dmd
+#import procgame
+#import procgame.lamps
+from procgame import *
 from random import *
 
-class PrepareToStart(procgame.game.Mode):
+
+class PrepareToStart(game.Mode):
 	"""Manages waiting for the game to be ready to start."""
 	def __init__(self, game):
 		super(PrepareToStart, self).__init__(game=game, priority=9)
@@ -70,21 +73,38 @@ class PrepareToStart(procgame.game.Mode):
 
 
 
-class Attract(procgame.game.Mode):
+class Attract(game.Mode):
 	"""A mode that runs whenever the game is in progress."""
 	def __init__(self, game):
 		super(Attract, self).__init__(game=game, priority=9)
         
 	def change_lampshow(self):
             shuffle(self.game.lampshow_keys)
-            print self.game.lampshow_keys[0]
             self.game.lampctrl.play_show(self.game.lampshow_keys[0], repeat=True)
             self.delay(name='lampshow', event_type=None, delay=10, handler=self.change_lampshow)
             
         def mode_started(self):
             #self.game.lamps.startButton.schedule(schedule=0xffff0000, cycle_seconds=0, now=False)
             self.change_lampshow()
-	
+            anim = dmd.Animation().load("./dmd/f14launch.dmd")
+            self.takeoff_layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=2)
+	    self.f14_splash_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14bw2.dmd').frames[0])
+            self.f14_sunset_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14sun.dmd').frames[0])
+            #self.f14_layer = dmd.TextLayer(128/2, 7, dmd.Font("../shared/dmd/Jazz18-18px.dmd"), "center", opaque=True).set_text("Tomcat 2.0")
+            self.f14_layer = dmd.TextLayer(128/2, 7, self.font_jazz18, "center", opaque=True).set_text("Tomcat 2.0")
+            self.press_start_layer = dmd.TextLayer(128/2, 7, dmd.Font("../shared/dmd/Font09Bx7.dmd"), "center", opaque=True).set_text("PRESS START")
+            
+
+            #self.credits_layer = dmd.PanningLayer(width=128, height=32, frame=credits_frame, origin=(0,0), translate=(0,1), bounce=False)
+            script = [{'seconds':5.0, 'layer':self.f14_splash_layer},
+		          {'seconds':3.0, 'layer':self.f14_layer},
+		#	  {'seconds':5.0, 'layer':self.f14_ink_layer},
+                          {'seconds':5.0, 'layer':self.f14_sunset_layer},
+                          {'seconds':5.0, 'layer':self.press_start_layer},
+                          {'seconds':7.5, 'layer':self.takeoff_layer}]
+                          
+            self.layer = dmd.ScriptedLayer(width=128, height=32, script=script)
+
 	def mode_stopped(self):
             self.game.lampctrl.stop_show()
                 
