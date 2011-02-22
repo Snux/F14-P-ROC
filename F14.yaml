@@ -1,4 +1,6 @@
 # P-ROC Game Description file for F-14 Tomcat
+# Coils 1-8 and 9-16 would need to be swapped if using the new interface board.
+# I wired my wrong, so my coils are out of sequence :-(
 PRGame:
     # Treat this as wpc as that's how the P-ROC will see it via the interface board.
     machineType: wpc

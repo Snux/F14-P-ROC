@@ -74,15 +74,17 @@ class PrepareToStart(game.Mode):
 
 class Attract(game.Mode):
 	"""A mode that runs whenever the game is in progress."""
-	def __init__(self, game):
-		super(Attract, self).__init__(game=game, priority=9)
         
+	def __init__(self, game):
+            super(Attract, self).__init__(game=game, priority=9)
+                        
 	def change_lampshow(self):
             shuffle(self.game.lampshow_keys)
             self.game.lampctrl.play_show(self.game.lampshow_keys[0], repeat=True)
             self.delay(name='lampshow', event_type=None, delay=10, handler=self.change_lampshow)
             
         def mode_started(self):
+            print self.game.targetmade['target1']
             #self.game.lamps.startButton.schedule(schedule=0xffff0000, cycle_seconds=0, now=False)
             self.change_lampshow()
             anim = dmd.Animation().load("./dmd/f14launch.dmd")

@@ -26,6 +26,7 @@ from procgame.dmd import font_named
 import pinproc
 import trough
 import ramps
+
 import attract
 
 import locale
@@ -53,10 +54,19 @@ class scoreMode(game.Mode):
 				delay=None, handler=self.plus100)
 
         def plus100(self,sw):
-            print sw.name
             self.game.score(100)
             self.game.lamps[sw.name].enable()
-
+            self.game.targetmade[sw.name]=True
+            allTargets=True
+            for x in self.game.targetmade:
+                if self.game.targetmade[x] == False:
+                    allTargets=False
+            if allTargets==True:
+                self.game.coils['beacons'].enable()
+                anim = dmd.Animation().load("./dmd/tomcat3.dmd")
+                self.layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=2)
+                
+                
             
 class BaseGameMode(game.Mode):
 	"""A mode that runs whenever the game is in progress."""
@@ -80,11 +90,18 @@ class TomcatGame(game.BasicGame):
 	
 	trough = None
 	base_game_mode = None
-	
+       	
 	def __init__(self):
-		super(TomcatGame, self).__init__(pinproc.MachineTypeWPC)
+		super(TomcatGame, self).__init__(pinproc.MachineTypeWPC95)
 		self.load_config('F14.yaml')
 		self.lampctrl = lamps.LampController(self)
+                self.targetmade = {}
+                self.targetmade['target1'] = False
+                self.targetmade['target2'] = False
+                self.targetmade['target3'] = False
+                self.targetmade['target4'] = False
+                self.targetmade['target5'] = False
+                self.targetmade['target6'] = False
                 tiny7 = dmd.Font(fnt_path+"04B-03-7px.dmd")
                 font_jazz18 = dmd.Font(fnt_path+"Jazz18-18px.dmd")
                 font_14x10 = dmd.Font(fnt_path+"Font14x10.dmd")
@@ -115,7 +132,6 @@ class TomcatGame(game.BasicGame):
 	
 	def reset(self):
 		super(TomcatGame,self).reset()
-		
 		self.modes.add(self.trough)
                 self.modes.add(self.ramp)
                 self.modes.add(self.score_mode)
