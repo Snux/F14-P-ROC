@@ -32,6 +32,7 @@ import attract
 import locale
 locale.setlocale(locale.LC_ALL, "") # Used to put commas in the score.
 fnt_path = "/shared/dmd/"
+sound_path = "./sound/"
 font_14x10 = font_named('Font14x10.dmd')
 font_jazz18 = font_named("Jazz18-18px.dmd")
 
@@ -65,6 +66,7 @@ class scoreMode(game.Mode):
                 self.game.coils['beacons'].enable()
                 anim = dmd.Animation().load("./dmd/tomcat3.dmd")
                 self.layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=2)
+                self.game.sound.play('startup')
                 
                 
             
@@ -95,6 +97,7 @@ class TomcatGame(game.BasicGame):
 		super(TomcatGame, self).__init__(pinproc.MachineTypeWPC95)
 		self.load_config('F14.yaml')
 		self.lampctrl = lamps.LampController(self)
+                self.sound = sound.SoundController(self)
                 self.targetmade = {}
                 self.targetmade['target1'] = False
                 self.targetmade['target2'] = False
@@ -102,6 +105,8 @@ class TomcatGame(game.BasicGame):
                 self.targetmade['target4'] = False
                 self.targetmade['target5'] = False
                 self.targetmade['target6'] = False
+                self.sound.register_sound('startup', sound_path+"Jet_F14_TakeOff.wav")
+                self.sound.set_volume(5)
                 tiny7 = dmd.Font(fnt_path+"04B-03-7px.dmd")
                 font_jazz18 = dmd.Font(fnt_path+"Jazz18-18px.dmd")
                 font_14x10 = dmd.Font(fnt_path+"Font14x10.dmd")

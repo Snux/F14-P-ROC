@@ -1,8 +1,8 @@
 # Placeholder for running the ramps.  Basically just keep the kickouts clear
 
-import procgame.game
+from procgame import *
 
-class Ramps(procgame.game.Mode):
+class Ramps(game.Mode):
 
     def __init__(self,game):
         super(Ramps,self).__init__(game=game,priority=2)
