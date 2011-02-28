@@ -81,9 +81,9 @@ PRSwitches:
         number: S37
     vUK:
         number: S38
-    leftCenter:
+    leftRescue:
         number: S41
-    rightCenter:
+    rightRescue:
         number: S42
     unused43:
         number: S43
@@ -204,9 +204,9 @@ PRCoils:
         number: C02
     gi:
         number: C03
-    yagovKickback:
+    yagovKickBack:
         number: C04
-    rescueKickback: 
+    rescueKickBack:
         number: C05
     acSelect: 
         number: C06
@@ -243,7 +243,7 @@ PRLamps:
         number: L16
     rescueRight:
         number: L17
-    rescueDrain:
+    kickBack:
         number: L18
     alpha:
         number: L21

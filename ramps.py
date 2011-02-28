@@ -17,5 +17,6 @@ class Ramps(game.Mode):
         self.game.coils.centreRightEject.pulse()
 
     def sw_rightEject_active_for_800ms(self,sw):
-        print "Eject"
         self.game.coils.rightEject.pulse()
+
+    
