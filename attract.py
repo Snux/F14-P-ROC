@@ -67,6 +67,7 @@ class PrepareToStart(game.Mode):
 		self.game.start_game()
 		# Add the first player
 		self.game.add_player()
+                self.game.add_player()
 		# Start the ball.  This includes ejecting a ball from the trough.
 		self.game.start_ball()
 
@@ -84,11 +85,10 @@ class Attract(game.Mode):
             self.delay(name='lampshow', event_type=None, delay=10, handler=self.change_lampshow)
             
         def mode_started(self):
-            print self.game.targetmade['target1']
             #self.game.lamps.startButton.schedule(schedule=0xffff0000, cycle_seconds=0, now=False)
             self.change_lampshow()
             anim = dmd.Animation().load("./dmd/f14launch.dmd")
-            self.takeoff_layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=2)
+            self.takeoff_layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=4)
 	    self.f14_splash_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14bw2.dmd').frames[0])
             self.f14_sunset_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14sun.dmd').frames[0])
             self.f14_layer = dmd.TextLayer(128/2, 7, font_named("Jazz18-18px.dmd"), "center", opaque=True).set_text("Tomcat 2.0")
@@ -124,7 +124,7 @@ class Attract(game.Mode):
 			  {'seconds':15.0, 'layer':self.credits_layer},
                           {'seconds':5.0, 'layer':self.f14_sunset_layer},
                           {'seconds':5.0, 'layer':self.press_start_layer},
-                          {'seconds':7.5, 'layer':self.takeoff_layer}]
+                          {'seconds':15, 'layer':self.takeoff_layer}]
                           
             self.layer = dmd.ScriptedLayer(width=128, height=32, script=script)
 

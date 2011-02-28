@@ -26,6 +26,7 @@ from procgame.dmd import font_named
 import pinproc
 import trough
 import ramps
+import player
 
 import attract
 
@@ -56,17 +57,21 @@ class scoreMode(game.Mode):
 
         def plus100(self,sw):
             self.game.score(100)
-            self.game.lamps[sw.name].enable()
-            self.game.targetmade[sw.name]=True
+            self.game.lamps[sw.name].enable()   # switch on the lamp at the target
+            self.game.current_player().targetmade[sw.name]=True
             allTargets=True
-            for x in self.game.targetmade:
-                if self.game.targetmade[x] == False:
+            for x in self.game.current_player().targetmade:
+                if self.game.current_player().targetmade[x] == False:
                     allTargets=False
             if allTargets==True:
                 self.game.coils['beacons'].enable()
-                anim = dmd.Animation().load("./dmd/tomcat3.dmd")
-                self.layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=2)
-                self.game.sound.play('startup')
+                anim = dmd.Animation().load("./dmd/radar.dmd")
+                self.layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, hold=False, frame_time=4)
+                self.delay(name='beacons', event_type=None, delay=2.0, handler=self.beaconsOff)
+                self.game.sound.play('inbound')
+
+        def beaconsOff(self):
+            self.game.coils['beacons'].disable()
                 
                 
             
@@ -98,14 +103,8 @@ class TomcatGame(game.BasicGame):
 		self.load_config('F14.yaml')
 		self.lampctrl = lamps.LampController(self)
                 self.sound = sound.SoundController(self)
-                self.targetmade = {}
-                self.targetmade['target1'] = False
-                self.targetmade['target2'] = False
-                self.targetmade['target3'] = False
-                self.targetmade['target4'] = False
-                self.targetmade['target5'] = False
-                self.targetmade['target6'] = False
                 self.sound.register_sound('startup', sound_path+"Jet_F14_TakeOff.wav")
+                self.sound.register_sound('inbound', sound_path+"inbound.wav")
                 self.sound.set_volume(5)
                 tiny7 = dmd.Font(fnt_path+"04B-03-7px.dmd")
                 font_jazz18 = dmd.Font(fnt_path+"Jazz18-18px.dmd")
@@ -132,9 +131,21 @@ class TomcatGame(game.BasicGame):
                 self.reset()
 
 
+        def update_player_record(self, key, record):
+		p = self.current_player()
+		p.info_record[key] = record
+
+	def get_player_record(self, key):
+		p = self.current_player()
+		if key in p.info_record:
+			return p.info_record[key]
+		else:
+			return []
 	
 	# GameController Methods
-	
+	def create_player(self, name):
+		return player.F14Player(name)
+
 	def reset(self):
 		super(TomcatGame,self).reset()
 		self.modes.add(self.trough)
@@ -158,8 +169,16 @@ class TomcatGame(game.BasicGame):
 	
 	def ball_starting(self):
 		self.log("BALL STARTING")
+                print "Start " + self.current_player().name
 		super(TomcatGame, self).ball_starting()
-		
+         
+                for x in self.current_player().targetmade:
+                    print x + " " + str(self.current_player().targetmade[x])
+                    if self.current_player().targetmade[x] == False:
+                        self.lamps[x].disable()
+                    else:
+                        self.lamps[x].enable()
+
 		# TODO: Check that there is not already a ball in the shooter lane.
 		# TODO: Pulse the trough until we get a hit from the shooter lane switch.
 		self.coils.trough.pulse() # eject a ball into the shooter lane
@@ -170,6 +189,7 @@ class TomcatGame(game.BasicGame):
 	def ball_ended(self):
 		"""Called by end_ball(), which is itself called by base_game_mode.trough_changed."""
 		self.log("BALL ENDED")
+                print "End " + self.current_player().name
 		self.modes.remove(self.base_game_mode)
 		self.enable_flippers(False)
 		super(TomcatGame, self).ball_ended()
