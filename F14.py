@@ -27,6 +27,7 @@ import pinproc
 import trough
 import player
 import ramps
+import handlers
 
 import attract
 
@@ -36,8 +37,6 @@ fnt_path = "/shared/dmd/"
 sound_path = "./sound/"
 font_14x10 = font_named('Font14x10.dmd')
 font_jazz18 = font_named("Jazz18-18px.dmd")
-
-
 
 lampshow_files = ["./lamps/sweepleftright.lampshow", \
 #                  "./lamps/f14fireright.lampshow", \
@@ -49,36 +48,103 @@ class BaseGameMode(game.Mode):
 	def __init__(self, game):
 		super(BaseGameMode, self).__init__(game=game, priority=1)
                 self.yagovHurryUpActive=False
-	
+                self.rescue={}
+    	
 	def mode_started(self):
 		self.game.trough.changed_handlers.append(self.trough_changed)
+
                 for switch in self.game.switches:
                     if switch.name.find('target', 0) != -1:
-		       self.add_switch_handler(name=switch.name, event_type='active', \
+                        self.add_switch_handler(name=switch.name, event_type='active', \
 				delay=None, handler=self.target1_6)
+                    if switch.name[0:5] in ('upper','lower'):
+                        self.add_switch_handler(name=switch.name, event_type='active', \
+                                delay=None, handler=self.targetTOMCAT)
+
+
+                self.add_switch_handler(name='leftRescue',event_type='active', \
+                                delay=0.01, handler=self.rescueHit)
+                self.add_switch_handler(name='rightRescue',event_type='active', \
+                                delay=0.01, handler=self.rescueHit)
+
                 if self.game.current_player().kickBackLit == 'on':
                     self.make_kickBack_active()
                 else:
                     self.make_kickBack_inactive()
 
-	def make_kickBack_active(self):
+                #self.scheduleTomcat()
+
+
+        def flickerOn(self,lamp):
+            if lamp[0:2] == 'on':
+                self.game.lamps[lamp[2:]].enable()
+            else:
+                self.game.lamps[lamp].schedule(schedule=0x55555555, cycle_seconds=0.75, now=True)
+                self.delay(name='lampon',event_type=None,delay=0.75,handler=self.flickerOn,param='on'+lamp)
+
+        def flickerOff(self,lamp):
+            if lamp[0:3] == 'off':
+                self.game.lamps[lamp[3:]].disable()
+            else:
+                self.game.lamps[lamp].schedule(schedule=0x55555555, cycle_seconds=0.75, now=True)
+                self.delay(name='lampoff',event_type=None,delay=0.75,handler=self.flickerOff,param='off'+lamp)
+        
+
+        def targetTOMCAT(self,sw):
+            self.flickerOff(sw.name)
+            self.game.score(10)
+
+        def scheduleTomcat(self):
+            self.game.lamps['lowerLeftT'].schedule( schedule=0b11100000000000000000000111000000, cycle_seconds=0, now=False)
+            self.game.lamps['lowerLeftO'].schedule( schedule=0b01110000000000000000001110000000, cycle_seconds=0, now=False)
+            self.game.lamps['lowerLeftM'].schedule( schedule=0b00111000000000000000011100000000, cycle_seconds=0, now=False)
+            self.game.lamps['upperLeftT'].schedule( schedule=0b00011100000000000000111000000000, cycle_seconds=0, now=False)
+            self.game.lamps['upperLeftO'].schedule( schedule=0b00001110000000000001110000000000, cycle_seconds=0, now=False)
+            self.game.lamps['upperLeftM'].schedule( schedule=0b00000111000000000011100000000000, cycle_seconds=0, now=False)
+            self.game.lamps['upperRightC'].schedule(schedule=0b00000011100000000111000000000000, cycle_seconds=0, now=False)
+            self.game.lamps['upperRightA'].schedule(schedule=0b00000001110000001110000000000000, cycle_seconds=0, now=False)
+            self.game.lamps['upperRightT'].schedule(schedule=0b00000000111000011100000000000000, cycle_seconds=0, now=False)
+            self.game.lamps['lowerRightC'].schedule(schedule=0b00000000011100111000000000000000, cycle_seconds=0, now=False)
+            self.game.lamps['lowerRightA'].schedule(schedule=0b00000000001101100000000000000000, cycle_seconds=0, now=False)
+            self.game.lamps['lowerRightT'].schedule(schedule=0b00000000000111000000000000000000, cycle_seconds=0, now=False)
+
+            
+
+
+
+        def make_kickBack_active(self):
             self.game.current_player().kickBackLit='on'
+            self.rescue['leftRescue']='on'
+            self.rescue['rightRescue']='on'
+            self.rescueSet(param='set')
             self.game.lamps['kickBack'].enable()
 
         def make_kickBack_inactive(self):
             self.game.current_player().kickBackLit='off'
+            self.rescueSet(param='timeout')
             self.game.lamps['kickBack'].disable()
 
         def mode_stopped(self): # naming is inconsistent with game_ended/ball_ended
-		self.game.trough.changed_handlers.remove(self.trough_changed)
-                self.stop_lamps()
+            self.game.trough.changed_handlers.remove(self.trough_changed)
+            self.display_clear()
+            self.stop_lamps()
                 
 	def trough_changed(self):
-		if self.game.trough.is_full():
-			self.game.end_ball()
+            if self.game.trough.is_full():
+		self.game.end_ball()
 
         def stop_lamps(self):
             self.game.lampctrl.stop_show()
+
+        def display_text(self,txt,time=2):
+            self.layer = dmd.TextLayer(128/2, 7, font_named("font09bx7.dmd"), "center", opaque=True).set_text(txt,seconds=time,blink_frames=2)
+            self.delay(name='dmdoff',event_type=None,delay=time,handler=self.display_clear)
+
+        def display_clear(self):
+            try:
+                del self.layer
+            except:
+                pass
 
         def sw_yagov_active(self,sw):
             self.game.coils.yagovKickBack.pulse()
@@ -95,7 +161,35 @@ class BaseGameMode(game.Mode):
                 self.game.lamps['kickBack'].schedule(schedule=0x0F0F0F0F, cycle_seconds=5, now=True)
                 self.delay(name='kickBackDelay', event_type=None, delay=5.0, handler=self.make_kickBack_inactive)
 
-        
+        def rescueHit(self,sw):
+            self.rescue[sw.name]='on'
+            self.game.score(50)
+            if self.game.current_player().kickBackLit != 'on':
+                if self.rescue['leftRescue']=='on' and self.rescue['rightRescue']=='on':
+                    self.make_kickBack_active()
+                    self.display_text(txt="KICKBACK ACTIVE")
+                    self.game.score(1000)
+                    self.cancel_delayed(name='rescueDelay')
+                else:
+                    if sw.name == 'leftRescue':
+                        self.rescue['rightRescue']='counting'
+                    if sw.name == 'rightRescue':
+                        self.rescue['leftRescue']='counting'
+                    self.delay(name='rescueDelay', event_type=None, delay=2.0, handler=self.rescueSet, param='timeout')
+            self.rescueSet(param='set')
+            
+        def rescueSet(self,param):
+            if param=='timeout':
+                self.rescue['leftRescue']='off'
+                self.rescue['rightRescue']='off'
+            for x in ['leftRescue','rightRescue']:
+                if self.rescue[x] == 'off':
+                    self.game.lamps[x].schedule(schedule=0x00FF00FF, cycle_seconds=0, now=True)
+                elif self.rescue[x] == 'counting':
+                    self.game.lamps[x].schedule(schedule=0x33333333, cycle_seconds=0, now=True)
+                else:
+                    self.game.lamps[x].enable()
+
         def target1_6(self,sw):
             self.game.score(100)
             self.game.lamps[sw.name].enable()   # switch on the lamp at the target
@@ -112,10 +206,10 @@ class BaseGameMode(game.Mode):
             for x in self.game.current_player().targetmade:
                 self.game.lamps[x].schedule(schedule=0x00FF00FF, cycle_seconds=2, now=True)
                 self.game.current_player().targetmade[x]=False
+            self.display_text(txt="SHOOT YAGOV!!")
             self.make_kickBack_active()
             self.yagovHurryUpActive=True
             self.game.lampctrl.play_show('fireleft', repeat=True)
-            #self.layer = dmd.TextLayer(128/2, 7, font_named("Jazz18-18px.dmd"), "center", opaque=True).set_text("Yagov Hurryup",seconds=5,blink_frames=2)
             self.delay(name='hurryUp', event_type=None, delay=5.0, handler=self.hurryUpEnd)
             self.game.sound.play('inbound')
 
@@ -140,14 +234,7 @@ class TomcatGame(game.BasicGame):
                 self.sound.register_sound('startup', sound_path+"Jet_F14_TakeOff.wav")
                 self.sound.register_sound('inbound', sound_path+"inbound.wav")
                 self.sound.set_volume(5)
-                tiny7 = dmd.Font(fnt_path+"04B-03-7px.dmd")
-                font_jazz18 = dmd.Font(fnt_path+"Jazz18-18px.dmd")
-                font_14x10 = dmd.Font(fnt_path+"Font14x10.dmd")
-                font_18x12 = dmd.Font(fnt_path+"Font18x12.dmd")
-                font_07x4 = dmd.Font(fnt_path+"Font07x4.dmd")
-                font_07x5 = dmd.Font(fnt_path+"Font07x5.dmd")
-                font_09Bx7 = dmd.Font(fnt_path+"Font09Bx7.dmd")
-	        # Register lampshow files
+                # Register lampshow files
 		self.lampshow_keys = []
 		key_ctr = 0
 		for file in lampshow_files:

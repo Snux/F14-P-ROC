@@ -237,11 +237,11 @@ PRLamps:
         number: L13
     flyAgain:
         number: L14
-    rescueLeft:
+    leftRescue:
         number: L15
     kill:
         number: L16
-    rescueRight:
+    rightRescue:
         number: L17
     kickBack:
         number: L18

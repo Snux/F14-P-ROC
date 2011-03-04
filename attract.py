@@ -130,6 +130,7 @@ class Attract(game.Mode):
 
 	def mode_stopped(self):
             self.game.lampctrl.stop_show()
+            
                 
 
 	def sw_startButton_active(self, sw):
