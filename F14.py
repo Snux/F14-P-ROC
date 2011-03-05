@@ -1,24 +1,4 @@
-# MIT License
-# 
-# Copyright (c) 2011 Adam Preble
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# Tomcat main game and mode
 
 from procgame import *
 from procgame.dmd import font_named
@@ -27,7 +7,7 @@ import pinproc
 import trough
 import player
 import ramps
-import handlers
+import effects
 
 import attract
 
@@ -74,44 +54,12 @@ class BaseGameMode(game.Mode):
 
                 #self.scheduleTomcat()
 
-
-        def flickerOn(self,lamp):
-            if lamp[0:2] == 'on':
-                self.game.lamps[lamp[2:]].enable()
-            else:
-                self.game.lamps[lamp].schedule(schedule=0x55555555, cycle_seconds=0.75, now=True)
-                self.delay(name='lampon',event_type=None,delay=0.75,handler=self.flickerOn,param='on'+lamp)
-
-        def flickerOff(self,lamp):
-            if lamp[0:3] == 'off':
-                self.game.lamps[lamp[3:]].disable()
-            else:
-                self.game.lamps[lamp].schedule(schedule=0x55555555, cycle_seconds=0.75, now=True)
-                self.delay(name='lampoff',event_type=None,delay=0.75,handler=self.flickerOff,param='off'+lamp)
         
-
         def targetTOMCAT(self,sw):
-            self.flickerOff(sw.name)
+            self.game.effects.flickerOff(sw.name)
             self.game.score(10)
 
-        def scheduleTomcat(self):
-            self.game.lamps['lowerLeftT'].schedule( schedule=0b11100000000000000000000111000000, cycle_seconds=0, now=False)
-            self.game.lamps['lowerLeftO'].schedule( schedule=0b01110000000000000000001110000000, cycle_seconds=0, now=False)
-            self.game.lamps['lowerLeftM'].schedule( schedule=0b00111000000000000000011100000000, cycle_seconds=0, now=False)
-            self.game.lamps['upperLeftT'].schedule( schedule=0b00011100000000000000111000000000, cycle_seconds=0, now=False)
-            self.game.lamps['upperLeftO'].schedule( schedule=0b00001110000000000001110000000000, cycle_seconds=0, now=False)
-            self.game.lamps['upperLeftM'].schedule( schedule=0b00000111000000000011100000000000, cycle_seconds=0, now=False)
-            self.game.lamps['upperRightC'].schedule(schedule=0b00000011100000000111000000000000, cycle_seconds=0, now=False)
-            self.game.lamps['upperRightA'].schedule(schedule=0b00000001110000001110000000000000, cycle_seconds=0, now=False)
-            self.game.lamps['upperRightT'].schedule(schedule=0b00000000111000011100000000000000, cycle_seconds=0, now=False)
-            self.game.lamps['lowerRightC'].schedule(schedule=0b00000000011100111000000000000000, cycle_seconds=0, now=False)
-            self.game.lamps['lowerRightA'].schedule(schedule=0b00000000001101100000000000000000, cycle_seconds=0, now=False)
-            self.game.lamps['lowerRightT'].schedule(schedule=0b00000000000111000000000000000000, cycle_seconds=0, now=False)
-
-            
-
-
-
+        
         def make_kickBack_active(self):
             self.game.current_player().kickBackLit='on'
             self.rescue['leftRescue']='on'
@@ -192,7 +140,7 @@ class BaseGameMode(game.Mode):
 
         def target1_6(self,sw):
             self.game.score(100)
-            self.game.lamps[sw.name].enable()   # switch on the lamp at the target
+            self.game.effects.flickerOn(sw.name)   # switch on the lamp at the target
             self.game.current_player().targetmade[sw.name]=True
             allTargets=True
             for x in self.game.current_player().targetmade:
@@ -247,6 +195,7 @@ class TomcatGame(game.BasicGame):
 
 		self.trough = trough.Trough(game=self)
 		self.base_game_mode = BaseGameMode(game=self)
+                self.effects = effects.Effects(game=self)
                 self.ramp = ramps.Ramps(game=self)
                 self.attract_mode = attract.Attract(game=self)
                 self.reset()
@@ -271,6 +220,7 @@ class TomcatGame(game.BasicGame):
 		super(TomcatGame,self).reset()
 		self.modes.add(self.trough)
                 self.modes.add(self.ramp)
+                self.modes.add(self.effects)
                 self.modes.add(self.attract_mode)
 
         def enable_flippers(self,enable):
