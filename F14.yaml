@@ -91,11 +91,11 @@ PRSwitches:
         number: S44
     unused45:
         number: S45
-    lowerRampMade:
+    bottomRampMade:
         number: S46
     centerRampMade:
         number: S47
-    upperRampMade:
+    topRampMade:
         number: S48
     lowerLeftT: 
         number: S51

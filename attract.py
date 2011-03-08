@@ -67,7 +67,7 @@ class PrepareToStart(game.Mode):
 		self.game.start_game()
 		# Add the first player
 		self.game.add_player()
-                self.game.add_player()
+                #self.game.add_player()
 		# Start the ball.  This includes ejecting a ball from the trough.
 		self.game.start_ball()
 
@@ -85,46 +85,45 @@ class Attract(game.Mode):
             self.delay(name='lampshow', event_type=None, delay=10, handler=self.change_lampshow)
             
         def mode_started(self):
-            #self.game.lamps.startButton.schedule(schedule=0xffff0000, cycle_seconds=0, now=False)
             self.change_lampshow()
             anim = dmd.Animation().load("./dmd/f14launch.dmd")
-            self.takeoff_layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=4)
+            self.takeoff_layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=5)
+            
 	    self.f14_splash_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14bw2.dmd').frames[0])
             self.f14_sunset_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14sun.dmd').frames[0])
-            self.f14_layer = dmd.TextLayer(128/2, 7, font_named("Jazz18-18px.dmd"), "center", opaque=True).set_text("Tomcat 2.0")
-            self.press_start_layer = dmd.TextLayer(128/2, 7, dmd.Font("../shared/dmd/Font09Bx7.dmd"), "center", opaque=True).set_text("PRESS START")
-            gen = dmd.MarkupFrameGenerator()
-            credits_frame = gen.frame_for_markup("""
+            self.f14_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/tomcat20beware.dmd').frames[0])
 
+            self.press_layer = dmd.TextLayer(128/2, 1, font_named("beware15.dmd"), "center").set_text("PRESS")
+            self.start_layer = dmd.TextLayer(128/2, 16, font_named("beware15.dmd"), "center").set_text("START")
+            self.press_start_layer = dmd.GroupedLayer(128, 32, [self.press_layer,self.start_layer])
+            gen = dmd.MarkupFrameGenerator()
+            gen.font_plain=font_named("beware11.dmd")
+            gen.font_bold=font_named("beware15.dmd")
+            credits_frame = gen.frame_for_markup("""
 
 #CREDITS#
 
-[Rules and Coding:]
+[Rules + Coding]
 [Mark Sunnucks]
 
-[Tools and Framework:]
-[Adam Preble]
+[Special thanks]
+[G. Stellenberg]
+[A. Preble]
+[S. van der Staaij]
 
-[P.ROC:]
-[www.]
-[pinballcontrollers.]
-[com]
+[P-ROC]
+[pyprocgame]
 
-[pyprocgame:]
-[pyprocgame.pindev.org]
-
-[Special thanks to:]
-[Gerry Stellenberg]
 """)
 
             self.credits_layer = dmd.PanningLayer(width=128, height=32, frame=credits_frame, origin=(0,0), translate=(0,1), bounce=False)
-
+            self.credits_layer.composite_op = 'blacksrc'
+            self.credits_overlay_layer = dmd.GroupedLayer(128, 32, [self.takeoff_layer,self.credits_layer])
             script = [{'seconds':5.0, 'layer':self.f14_splash_layer},
-		          {'seconds':3.0, 'layer':self.f14_layer},
-			  {'seconds':15.0, 'layer':self.credits_layer},
+		          {'seconds':5.0, 'layer':self.f14_layer},
+			  {'seconds':20.0, 'layer':self.credits_overlay_layer},
                           {'seconds':5.0, 'layer':self.f14_sunset_layer},
-                          {'seconds':5.0, 'layer':self.press_start_layer},
-                          {'seconds':15, 'layer':self.takeoff_layer}]
+                          {'seconds':5.0, 'layer':self.press_start_layer}]
                           
             self.layer = dmd.ScriptedLayer(width=128, height=32, script=script)
 

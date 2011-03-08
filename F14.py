@@ -8,6 +8,7 @@ import trough
 import player
 import ramps
 import effects
+import F14modes
 
 import attract
 
@@ -29,17 +30,22 @@ class BaseGameMode(game.Mode):
 		super(BaseGameMode, self).__init__(game=game, priority=1)
                 self.yagovHurryUpActive=False
                 self.rescue={}
+                self.tomcatTargets={}
     	
 	def mode_started(self):
 		self.game.trough.changed_handlers.append(self.trough_changed)
+                anim = dmd.Animation().load("./dmd/tomcat3.dmd")
+                self.layer = dmd.AnimatedLayer(frames=anim.frames, repeat=True, frame_time=1)
 
                 for switch in self.game.switches:
                     if switch.name.find('target', 0) != -1:
                         self.add_switch_handler(name=switch.name, event_type='active', \
-				delay=None, handler=self.target1_6)
+				delay=0.01, handler=self.target1_6)
                     if switch.name[0:5] in ('upper','lower'):
                         self.add_switch_handler(name=switch.name, event_type='active', \
-                                delay=None, handler=self.targetTOMCAT)
+                                delay=0.01, handler=self.targetTOMCAT)
+                        self.tomcatTargets[switch.name]=False
+                        self.game.lamps[switch.name].disable()
 
 
                 self.add_switch_handler(name='leftRescue',event_type='active', \
@@ -54,10 +60,30 @@ class BaseGameMode(game.Mode):
 
                 #self.scheduleTomcat()
 
+        def sw_rampEntry_active(self,sw):
+            try:
+                del self.layer
+            except:
+                pass
         
         def targetTOMCAT(self,sw):
-            self.game.effects.flickerOff(sw.name)
+            self.tomcatTargets[sw.name]=True
+            if sw.name[0:5]=="upper":
+                otherside="lower"+sw.name[5:]
+            else:
+                otherside="upper"+sw.name[5:]
+            self.tomcatTargets[otherside]=True
             self.game.score(10)
+            if sum([i for i in self.tomcatTargets.values()])==12: # all targets lit
+                self.game.modes.add(self.game.tomcathurryup)
+            else:
+                #self.game.lamps.lowerLeftT.schedule(schedule=0x55555555, cycle_seconds=0.75, now=True)
+                #self.delay(name='lowerLeftT',event_type=None,delay=0.75,handler=self.game.lamps.lowerLeftT.enable)
+                #self.game.lamps.upperLeftT.schedule(schedule=0x55555555, cycle_seconds=0.75, now=True)
+                #self.delay(name='upperLeftT',event_type=None,delay=0.75,handler=self.game.lamps.upperLeftT.enable)
+                self.game.effects.flickerOn(sw.name)
+                self.game.effects.flickerOn(otherside)
+                
 
         
         def make_kickBack_active(self):
@@ -74,7 +100,8 @@ class BaseGameMode(game.Mode):
 
         def mode_stopped(self): # naming is inconsistent with game_ended/ball_ended
             self.game.trough.changed_handlers.remove(self.trough_changed)
-            self.display_clear()
+            self.game.modes.remove(self.game.tomcathurryup)
+            self.game.effects.display_clear()
             self.stop_lamps()
                 
 	def trough_changed(self):
@@ -84,16 +111,7 @@ class BaseGameMode(game.Mode):
         def stop_lamps(self):
             self.game.lampctrl.stop_show()
 
-        def display_text(self,txt,time=2):
-            self.layer = dmd.TextLayer(128/2, 7, font_named("font09bx7.dmd"), "center", opaque=True).set_text(txt,seconds=time,blink_frames=2)
-            self.delay(name='dmdoff',event_type=None,delay=time,handler=self.display_clear)
-
-        def display_clear(self):
-            try:
-                del self.layer
-            except:
-                pass
-
+        
         def sw_yagov_active(self,sw):
             self.game.coils.yagovKickBack.pulse()
             if self.yagovHurryUpActive==True:
@@ -115,7 +133,7 @@ class BaseGameMode(game.Mode):
             if self.game.current_player().kickBackLit != 'on':
                 if self.rescue['leftRescue']=='on' and self.rescue['rightRescue']=='on':
                     self.make_kickBack_active()
-                    self.display_text(txt="KICKBACK ACTIVE")
+                    self.game.effects.display_text(txt="KICKBACK", txt2="ACTIVE")
                     self.game.score(1000)
                     self.cancel_delayed(name='rescueDelay')
                 else:
@@ -142,19 +160,16 @@ class BaseGameMode(game.Mode):
             self.game.score(100)
             self.game.effects.flickerOn(sw.name)   # switch on the lamp at the target
             self.game.current_player().targetmade[sw.name]=True
-            allTargets=True
-            for x in self.game.current_player().targetmade:
-                if self.game.current_player().targetmade[x] == False:
-                    allTargets=False
-            if allTargets==True:
+            if sum([i for i in self.game.current_player().targetmade.values()])==6:
                 self.hurryUpStart();
+
 
 
         def hurryUpStart(self):
             for x in self.game.current_player().targetmade:
                 self.game.lamps[x].schedule(schedule=0x00FF00FF, cycle_seconds=2, now=True)
                 self.game.current_player().targetmade[x]=False
-            self.display_text(txt="SHOOT YAGOV!!")
+            self.game.effects.display_text(txt="SHOOT YAGOV!!")
             self.make_kickBack_active()
             self.yagovHurryUpActive=True
             self.game.lampctrl.play_show('fireleft', repeat=True)
@@ -164,7 +179,7 @@ class BaseGameMode(game.Mode):
         def hurryUpEnd(self):
             self.yagovHurryUpActive=False
             self.game.lampctrl.stop_show()
-            #del self.layer
+        
 	
 
 
@@ -196,6 +211,7 @@ class TomcatGame(game.BasicGame):
 		self.trough = trough.Trough(game=self)
 		self.base_game_mode = BaseGameMode(game=self)
                 self.effects = effects.Effects(game=self)
+                self.tomcathurryup = F14modes.TomcatHurryup(game=self)
                 self.ramp = ramps.Ramps(game=self)
                 self.attract_mode = attract.Attract(game=self)
                 self.reset()
@@ -243,7 +259,7 @@ class TomcatGame(game.BasicGame):
 		super(TomcatGame, self).ball_starting()
          
                 for x in self.current_player().targetmade:
-                    print x + " " + str(self.current_player().targetmade[x])
+                    #print x + " " + str(self.current_player().targetmade[x])
                     if self.current_player().targetmade[x] == False:
                         self.lamps[x].disable()
                     else:
