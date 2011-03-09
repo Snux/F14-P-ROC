@@ -4,6 +4,7 @@ from procgame import *
 from procgame.dmd import font_named
 
 import pinproc
+import time
 import trough
 import player
 import ramps
@@ -30,7 +31,10 @@ class BaseGameMode(game.Mode):
 		super(BaseGameMode, self).__init__(game=game, priority=1)
                 self.yagovHurryUpActive=False
                 self.rescue={}
+                self.bonusXRight = 'off'
+                self.bonusXLeft = 'off'
                 self.tomcatTargets={}
+                self.lastBonusLoop = time.clock()
     	
 	def mode_started(self):
 		self.game.trough.changed_handlers.append(self.trough_changed)
@@ -53,12 +57,48 @@ class BaseGameMode(game.Mode):
                 self.add_switch_handler(name='rightRescue',event_type='active', \
                                 delay=0.01, handler=self.rescueHit)
 
+                
+                self.add_switch_handler(name='bonusXRight',event_type='active', \
+                                delay=0.01, handler=self.rescueHit)
+                self.add_switch_handler(name='bonusXLeft',event_type='active', \
+                                delay=0.01, handler=self.bonusLane)
+
                 if self.game.current_player().kickBackLit == 'on':
                     self.make_kickBack_active()
                 else:
                     self.make_kickBack_inactive()
 
                 #self.scheduleTomcat()
+
+        def bonusLane(self,sw):
+            if time.clock() - self.lastBonusLoop < 1:
+                pass
+            else:
+                self.lastBonusLoop=time.clock()
+                if sw.name[6:]=="Right":
+                    if self.bonusXRight == 'on':
+                        self.game.inc_bonusMultiplier()
+                        self.cancel_delayed(name="rightoff")
+                    self.game.lamps[sw.name].schedule(schedule=0x0F0F0F0F, cycle_seconds=2.0, now=True)
+                    self.delay(name="rightoff",event_type=None,delay=2.0,handler=self.bonusLaneOff,param="Right")
+                    self.bonusXRight = 'on'
+                else:
+                    if self.bonusXLeft == 'on':
+                        self.game.inc_bonusMultiplier()
+                        self.cancel_delayed(name="leftoff")
+                    self.game.lamps[sw.name].schedule(schedule=0x0F0F0F0F, cycle_seconds=2.0, now=True)
+                    self.delay(name="leftoff",event_type=None,delay=2.0,handler=self.bonusLaneOff,param="Left")
+                    self.bonusXLeft = 'on'
+
+
+        def bonusLaneOff(self,side):
+            if side == "Right":
+                self.bonusXRight = 'off'
+                self.game.lamps["bonusXRight"].disable()
+            else:
+                self.bonusXLeft = 'off'
+                self.game.lamps["bonusXLeft"].disable()
+
 
         def sw_rampEntry_active(self,sw):
             try:
@@ -158,6 +198,7 @@ class BaseGameMode(game.Mode):
 
         def target1_6(self,sw):
             self.game.score(100)
+            self.game.bonus(1)
             self.game.effects.flickerOn(sw.name)   # switch on the lamp at the target
             self.game.current_player().targetmade[sw.name]=True
             if sum([i for i in self.game.current_player().targetmade.values()])==6:
@@ -227,7 +268,18 @@ class TomcatGame(game.BasicGame):
 			return p.info_record[key]
 		else:
 			return []
-	
+
+        def bonus(self, bonus):
+            self.current_player().bonus += bonus
+            if self.current_player().bonus > 127:
+                self.current_player().bonus = 127
+            self.effects.light_bonus()
+
+        def inc_bonusMultiplier(self):
+            if self.current_player().bonusMultiplier < 8:
+                self.current_player().bonusMultiplier += 1
+                self.effects.light_bonus()
+
 	# GameController Methods
 	def create_player(self, name):
 		return player.F14Player(name)

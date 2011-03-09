@@ -38,12 +38,13 @@ class Effects(game.Mode):
         self.game.lamps[lamp].schedule(schedule=schedule, cycle_seconds=duration, now=True)
         self.delay(name=lamp+"off",event_type=None,delay=duration,handler=self.game.lamps[lamp].disable)
 
-    def display_text(self,txt,txt2=None,time=2):
+    def display_text(self,txt,txt2=None,time=2,blink=2):
         if txt2==None:
-            self.layer = dmd.TextLayer(128/2, 7, font_named("beware11.dmd"), "center", opaque=True).set_text(txt,seconds=time,blink_frames=2)
+            self.layer = dmd.TextLayer(128/2, 7, font_named("beware11.dmd"), "center", opaque=True).set_text(txt,seconds=time,blink_frames=blink)
         else:
             self.press_layer = dmd.TextLayer(128/2, -5, font_named("beware15.dmd"), "center").set_text(txt,seconds=time)
-            self.start_layer = dmd.TextLayer(128/2, 10, font_named("beware15.dmd"), "center").set_text(txt2,seconds=time, blink_frames=2)
+            self.start_layer = dmd.TextLayer(128/2, 10, font_named("beware15.dmd"), "center").set_text(txt2,seconds=time, blink_frames=blink)
+            self.start_layer.composite_op = 'blacksrc'
             self.layer = dmd.GroupedLayer(128, 32, [self.press_layer,self.start_layer])
         self.delay(name='dmdoff',event_type=None,delay=time,handler=self.display_clear)
 
@@ -53,6 +54,28 @@ class Effects(game.Mode):
             del self.layer
         except:
             pass
+
+    def light_bonus(self):
+        """
+        Display the current bonus multiplier and bonus count for
+        the player on the playfield lamps
+        """
+
+        # Multiplier is easy
+        if self.game.current_player().bonusMultiplier > 1:
+            for x in range(2, self.game.current_player().bonusMultiplier):
+                self.game.lamps["bonus"+str(x)+"X"].enable()
+
+        # For the bonus we need to work through the binary value
+        bonus = self.game.current_player().bonus
+        bonusbin = "0"*(7-len(bin(bonus)[2:]))+bin(bonus)[2:]
+        digitvalue=64
+        for digit in list(bonusbin):
+            if digit == "1":
+                self.game.lamps["bonus"+str(digitvalue)+"K"].enable()
+            else:
+                self.game.lamps["bonus"+str(digitvalue)+"K"].disable()
+            digitvalue /= 2
 
 
     

@@ -125,7 +125,7 @@ PRSwitches:
         number: S65
     target6:
         number: S66
-    topRightLoop:
+    bonusXRight:
         number: S67
     spinner:
         number: S68
@@ -143,7 +143,7 @@ PRSwitches:
         number: S76
     yagov:
         number: S77
-    topLeftLoop:
+    bonusXLeft:
         number: S78
     slingL:
         number: S81

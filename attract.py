@@ -93,8 +93,9 @@ class Attract(game.Mode):
             self.f14_sunset_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14sun.dmd').frames[0])
             self.f14_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/tomcat20beware.dmd').frames[0])
 
-            self.press_layer = dmd.TextLayer(128/2, 1, font_named("beware15.dmd"), "center").set_text("PRESS")
-            self.start_layer = dmd.TextLayer(128/2, 16, font_named("beware15.dmd"), "center").set_text("START")
+            self.press_layer = dmd.TextLayer(128/2, -8, font_named("beware22.dmd"), "center").set_text("PRESS")
+            self.start_layer = dmd.TextLayer(128/2, 8, font_named("beware22.dmd"), "center").set_text("START")
+            self.start_layer.composite_op = 'blacksrc'
             self.press_start_layer = dmd.GroupedLayer(128, 32, [self.press_layer,self.start_layer])
             gen = dmd.MarkupFrameGenerator()
             gen.font_plain=font_named("beware11.dmd")
@@ -120,8 +121,8 @@ class Attract(game.Mode):
             self.credits_layer.composite_op = 'blacksrc'
             self.credits_overlay_layer = dmd.GroupedLayer(128, 32, [self.takeoff_layer,self.credits_layer])
             script = [{'seconds':5.0, 'layer':self.f14_splash_layer},
-		          {'seconds':5.0, 'layer':self.f14_layer},
-			  {'seconds':20.0, 'layer':self.credits_overlay_layer},
+		          {'seconds':5.0, 'layer':self.press_start_layer},
+			  {'seconds':18.5, 'layer':self.credits_overlay_layer},
                           {'seconds':5.0, 'layer':self.f14_sunset_layer},
                           {'seconds':5.0, 'layer':self.press_start_layer}]
                           
