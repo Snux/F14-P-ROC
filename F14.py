@@ -35,10 +35,12 @@ class BaseGameMode(game.Mode):
                 self.bonusXLeft = 'off'
                 self.tomcatTargets={}
                 self.lastBonusLoop = time.clock()
+                self.modeRunning=False
     	
 	def mode_started(self):
 		self.game.trough.changed_handlers.append(self.trough_changed)
                 anim = dmd.Animation().load("./dmd/tomcat3.dmd")
+                self.update_kills()
                 self.layer = dmd.AnimatedLayer(frames=anim.frames, repeat=True, frame_time=1)
 
                 for switch in self.game.switches:
@@ -115,12 +117,10 @@ class BaseGameMode(game.Mode):
             self.tomcatTargets[otherside]=True
             self.game.score(10)
             if sum([i for i in self.tomcatTargets.values()])==12: # all targets lit
+                for x in self.tomcatTargets:
+                    self.tomcatTargets[x]=False
                 self.game.modes.add(self.game.tomcathurryup)
             else:
-                #self.game.lamps.lowerLeftT.schedule(schedule=0x55555555, cycle_seconds=0.75, now=True)
-                #self.delay(name='lowerLeftT',event_type=None,delay=0.75,handler=self.game.lamps.lowerLeftT.enable)
-                #self.game.lamps.upperLeftT.schedule(schedule=0x55555555, cycle_seconds=0.75, now=True)
-                #self.delay(name='upperLeftT',event_type=None,delay=0.75,handler=self.game.lamps.upperLeftT.enable)
                 self.game.effects.flickerOn(sw.name)
                 self.game.effects.flickerOn(otherside)
                 
@@ -152,13 +152,31 @@ class BaseGameMode(game.Mode):
             self.game.lampctrl.stop_show()
 
         
-        def sw_yagov_active(self,sw):
+        def sw_yagov_active_for_15ms(self,sw):
             self.game.coils.yagovKickBack.pulse()
             if self.yagovHurryUpActive==True:
                 self.game.lampctrl.play_show('topstrobe', repeat=False)
                 self.yagovHurryUpActive=False
                 self.game.score(10000)
-    
+            
+            if self.game.current_player().extraBallLit:
+                self.game.effects.display_text(txt="EXTRA",txt2="BALL")
+                self.game.current_player().extraBallLit=False
+                self.game.current_player().extra_balls+=1
+                self.game.lamps.flyAgain.enable()
+                self.game.lamps.extraBall.disable()
+                self.game.current_player().nextkill='alpha'
+            elif self.game.current_player().nextkill < 'golf':
+                self.game.effects.flickerOn(self.game.current_player().nextkill)
+                self.game.effects.display_text(txt=self.game.current_player().nextkill,txt2="KILL")
+                self.game.current_player().nextkill = self.game.next_kill(self.game.current_player().nextkill)
+            elif self.game.current_player().nextkill == 'golf':
+                if self.game.current_player().extraBallLit == False:
+                    self.game.current_player().extraBallLit = True
+                    self.game.lamps.extraBall.schedule(schedule=0x0F0F0F0F, cycle_seconds=0, now=True)
+                    self.game.effects.display_text(txt="EXTRABALL",txt2="IS LIT")
+            self.update_kills()
+
         def sw_outlaneL_active_for_10ms(self,sw):
             if self.game.current_player().kickBackLit != 'off':
                 self.game.coils.rescueKickBack.pulse()
@@ -220,7 +238,26 @@ class BaseGameMode(game.Mode):
         def hurryUpEnd(self):
             self.yagovHurryUpActive=False
             self.game.lampctrl.stop_show()
-        
+
+        def update_lamps(self):
+            self.update_kills()
+            self.game.effects.light_bonus()
+            if self.game.current_player().extraBallLit:
+                self.game.lamps.extraBall.schedule(schedule=0x0F0F0F0F, cycle_seconds=0, now=True)
+
+        def update_kills(self):
+            k = self.game.current_player().nextkill
+            for x in self.game.kill_list:
+                if self.game.current_player().extraBallLit:
+                    self.game.lamps[x].schedule(schedule=0x0F0F0F0F, cycle_seconds=0, now=True)
+                else:
+                    if x < k:
+                        self.game.lamps[x].enable()
+                    elif x==k:
+                        self.game.lamps[x].schedule(schedule=0x0F0F0F0F, cycle_seconds=0, now=True)
+                    else:
+                        self.game.lamps[x].disable()
+
 	
 
 
@@ -229,11 +266,20 @@ class TomcatGame(game.BasicGame):
 	
 	trough = None
 	base_game_mode = None
+        kill_list=['alpha','bravo','charlie','delta','echo','foxtrot','golf']
+
+        def next_kill(self,curr):
+            currpos = self.kill_list.index(curr)
+            if curr != 'golf':
+                return self.kill_list[currpos+1]
+            else:
+                return curr
        	
 	def __init__(self):
 		super(TomcatGame, self).__init__(pinproc.MachineTypeWPC95)
 		self.load_config('F14.yaml')
 		self.lampctrl = lamps.LampController(self)
+                
                 self.sound = sound.SoundController(self)
                 self.sound.register_sound('startup', sound_path+"Jet_F14_TakeOff.wav")
                 self.sound.register_sound('inbound', sound_path+"inbound.wav")
@@ -247,6 +293,7 @@ class TomcatGame(game.BasicGame):
 			self.lampctrl.register_show(key, file)
 			key_ctr += 1
 		self.lampctrl.register_show('fireleft','./lamps/f14fireleft.lampshow')
+                self.lampctrl.register_show('fireright','./lamps/f14fireright.lampshow')
                 self.lampctrl.register_show('topstrobe','./lamps/topstrobe.lampshow')
 
 		self.trough = trough.Trough(game=self)
@@ -332,11 +379,16 @@ class TomcatGame(game.BasicGame):
 		self.enable_flippers(False)
 		super(TomcatGame, self).ball_ended()
 
+        def shoot_again(self):
+            if self.current_player().extra_balls == 0:
+                self.lamps.flyAgain.disable()
+            super(TomcatGame, self).shoot_again()
+
 	def game_ended(self):
 		self.log("GAME ENDED")
 		super(TomcatGame, self).game_ended()
 		self.modes.remove(self.base_game_mode)
-		self.modes.add(self.attract_mode)
+                self.modes.add(self.attract_mode)
 
 ## main:
 

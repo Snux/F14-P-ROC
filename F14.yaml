@@ -45,9 +45,9 @@ PRSwitches:
         number: S11
     outlaneL:
         number: S85
-    inLaneL:
+    inlaneLeft:
         number: S83
-    inLaneR:
+    inlaneRight:
         number: S84
     outlaneR:
         number: S86
@@ -149,8 +149,6 @@ PRSwitches:
         number: S81
     slingR:
         number: S82
-    unused83:
-        number: S83
     unused84:
         number: S84
     unused85:

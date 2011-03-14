@@ -20,12 +20,13 @@ class TomcatHurryup(game.Mode):
         self.remind()
 
     def remind(self):
-        self.game.lampctrl.play_show('topstrobe', repeat=False)
-        self.game.effects.display_text(txt="SHOOT T-O-M-C-A-T")
+        self.game.effects.display_text(txt="SHOOT",txt2="TOMCAT")
         self.delay(name='remind',event_type=None,delay=5,handler=self.remind)
 
     def mode_stopped(self):
         self.game.coils.beacons.disable()
+        for x in self.tomcatTargets:
+            self.tomcatTargets[x]=False
         for x in self.tomcatTargets:
             self.game.lamps[x].disable()
         
@@ -51,7 +52,6 @@ class TomcatHurryup(game.Mode):
 
     def targetHit(self,sw):
         self.game.lamps[sw.name].enable()
-        print "F14 mode " + sw.name
         self.tomcatTargets[sw.name]=True
         if sum([i for i in self.tomcatTargets.values()])==12:
             self.game.effects.display_text(txt="TOMCAT BONUS 100 K",time=3.5)

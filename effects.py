@@ -42,8 +42,8 @@ class Effects(game.Mode):
         if txt2==None:
             self.layer = dmd.TextLayer(128/2, 7, font_named("beware11.dmd"), "center", opaque=True).set_text(txt,seconds=time,blink_frames=blink)
         else:
-            self.press_layer = dmd.TextLayer(128/2, -5, font_named("beware15.dmd"), "center").set_text(txt,seconds=time)
-            self.start_layer = dmd.TextLayer(128/2, 10, font_named("beware15.dmd"), "center").set_text(txt2,seconds=time, blink_frames=blink)
+            self.press_layer = dmd.TextLayer(128/2, -5, font_named("beware20aa.dmd"), "center").set_text(txt,seconds=time)
+            self.start_layer = dmd.TextLayer(128/2, 10, font_named("beware20aa.dmd"), "center").set_text(txt2,seconds=time, blink_frames=blink)
             self.start_layer.composite_op = 'blacksrc'
             self.layer = dmd.GroupedLayer(128, 32, [self.press_layer,self.start_layer])
         self.delay(name='dmdoff',event_type=None,delay=time,handler=self.display_clear)
@@ -55,6 +55,7 @@ class Effects(game.Mode):
         except:
             pass
 
+        
     def light_bonus(self):
         """
         Display the current bonus multiplier and bonus count for
