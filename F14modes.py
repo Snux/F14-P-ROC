@@ -54,7 +54,7 @@ class TomcatHurryup(game.Mode):
         self.game.lamps[sw.name].enable()
         self.tomcatTargets[sw.name]=True
         if sum([i for i in self.tomcatTargets.values()])==12:
-            self.game.effects.display_text(txt="TOMCAT BONUS 100 K",time=3.5)
+            self.game.effects.display_text(txt="BONUS",txt2="100 K",time=3.5)
             self.game.score(100000)
             self.game.modes.remove(self.game.tomcathurryup)
         return True

@@ -87,7 +87,7 @@ class Attract(game.Mode):
         def mode_started(self):
             self.change_lampshow()
             anim = dmd.Animation().load("./dmd/f14launch.dmd")
-            self.takeoff_layer = dmd.AnimatedLayer(frames=anim.frames, repeat=False, frame_time=5)
+            self.takeoff_layer = dmd.AnimatedLayer(frames=anim.frames, hold=False, repeat=False, frame_time=5)
             
 	    self.f14_splash_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14bw2.dmd').frames[0])
             self.f14_sunset_layer = dmd.FrameLayer(opaque=True, frame=dmd.Animation().load('./dmd/f14sun.dmd').frames[0])
@@ -122,7 +122,7 @@ class Attract(game.Mode):
             self.credits_overlay_layer = dmd.GroupedLayer(128, 32, [self.takeoff_layer,self.credits_layer])
             script = [{'seconds':5.0, 'layer':self.f14_splash_layer},
 		          {'seconds':5.0, 'layer':self.press_start_layer},
-			  {'seconds':18.5, 'layer':self.credits_overlay_layer},
+			  {'seconds':20.0, 'layer':self.credits_overlay_layer},
                           {'seconds':5.0, 'layer':self.f14_sunset_layer},
                           {'seconds':5.0, 'layer':self.press_start_layer}]
                           

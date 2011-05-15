@@ -64,7 +64,7 @@ class Effects(game.Mode):
 
         # Multiplier is easy
         if self.game.current_player().bonusMultiplier > 1:
-            for x in range(2, self.game.current_player().bonusMultiplier):
+            for x in range(2, self.game.current_player().bonusMultiplier+1):
                 self.game.lamps["bonus"+str(x)+"X"].enable()
 
         # For the bonus we need to work through the binary value
@@ -78,8 +78,9 @@ class Effects(game.Mode):
                 self.game.lamps["bonus"+str(digitvalue)+"K"].disable()
             digitvalue /= 2
 
+    def update_lamps(self):
+        self.light_bonus()
 
-    
 
 
 

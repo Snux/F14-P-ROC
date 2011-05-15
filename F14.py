@@ -82,14 +82,14 @@ class BaseGameMode(game.Mode):
                         self.game.inc_bonusMultiplier()
                         self.cancel_delayed(name="rightoff")
                     self.game.lamps[sw.name].schedule(schedule=0x0F0F0F0F, cycle_seconds=2.0, now=True)
-                    self.delay(name="rightoff",event_type=None,delay=2.0,handler=self.bonusLaneOff,param="Right")
+                    self.delay(name="rightoff",event_type=None,delay=4.0,handler=self.bonusLaneOff,param="Right")
                     self.bonusXRight = 'on'
                 else:
                     if self.bonusXLeft == 'on':
                         self.game.inc_bonusMultiplier()
                         self.cancel_delayed(name="leftoff")
                     self.game.lamps[sw.name].schedule(schedule=0x0F0F0F0F, cycle_seconds=2.0, now=True)
-                    self.delay(name="leftoff",event_type=None,delay=2.0,handler=self.bonusLaneOff,param="Left")
+                    self.delay(name="leftoff",event_type=None,delay=4.0,handler=self.bonusLaneOff,param="Left")
                     self.bonusXLeft = 'on'
 
 
@@ -110,6 +110,7 @@ class BaseGameMode(game.Mode):
         
         def targetTOMCAT(self,sw):
             self.tomcatTargets[sw.name]=True
+            self.game.sound.play('tomcat')
             if sw.name[0:5]=="upper":
                 otherside="lower"+sw.name[5:]
             else:
@@ -153,12 +154,21 @@ class BaseGameMode(game.Mode):
 
         
         def sw_yagov_active_for_15ms(self,sw):
+
+            # Always fire the ball back to the player asap
             self.game.coils.yagovKickBack.pulse()
+            self.game.lampctrl.play_show('radarflash', repeat=False)
+            
+            self.game.sound.play('alarm')
+
             if self.yagovHurryUpActive==True:
                 self.game.lampctrl.play_show('topstrobe', repeat=False)
                 self.yagovHurryUpActive=False
+                self.game.update_lamps()
                 self.game.score(10000)
-            
+            self.handle_kill()
+
+        def handle_kill(self):
             if self.game.current_player().extraBallLit:
                 self.game.effects.display_text(txt="EXTRA",txt2="BALL")
                 self.game.current_player().extraBallLit=False
@@ -188,6 +198,10 @@ class BaseGameMode(game.Mode):
         def rescueHit(self,sw):
             self.rescue[sw.name]='on'
             self.game.score(50)
+            if self.game.ramps.kill_lit:
+                self.handle_kill()
+                self.game.ramps.disable_kill()
+                self.game.ramps.clear_enable_kill()
             if self.game.current_player().kickBackLit != 'on':
                 if self.rescue['leftRescue']=='on' and self.rescue['rightRescue']=='on':
                     self.make_kickBack_active()
@@ -217,6 +231,7 @@ class BaseGameMode(game.Mode):
         def target1_6(self,sw):
             self.game.score(100)
             self.game.bonus(1)
+            self.game.ramps.light_enable_kill()
             self.game.effects.flickerOn(sw.name)   # switch on the lamp at the target
             self.game.current_player().targetmade[sw.name]=True
             if sum([i for i in self.game.current_player().targetmade.values()])==6:
@@ -228,7 +243,7 @@ class BaseGameMode(game.Mode):
             for x in self.game.current_player().targetmade:
                 self.game.lamps[x].schedule(schedule=0x00FF00FF, cycle_seconds=2, now=True)
                 self.game.current_player().targetmade[x]=False
-            self.game.effects.display_text(txt="SHOOT YAGOV!!")
+            self.game.effects.display_text(txt="SHOOT",txt2="YAGOV!!")
             self.make_kickBack_active()
             self.yagovHurryUpActive=True
             self.game.lampctrl.play_show('fireleft', repeat=True)
@@ -238,10 +253,10 @@ class BaseGameMode(game.Mode):
         def hurryUpEnd(self):
             self.yagovHurryUpActive=False
             self.game.lampctrl.stop_show()
+            self.game.update_lamps()
 
         def update_lamps(self):
             self.update_kills()
-            self.game.effects.light_bonus()
             if self.game.current_player().extraBallLit:
                 self.game.lamps.extraBall.schedule(schedule=0x0F0F0F0F, cycle_seconds=0, now=True)
 
@@ -283,6 +298,10 @@ class TomcatGame(game.BasicGame):
                 self.sound = sound.SoundController(self)
                 self.sound.register_sound('startup', sound_path+"Jet_F14_TakeOff.wav")
                 self.sound.register_sound('inbound', sound_path+"inbound.wav")
+                self.sound.register_sound('slinglow', sound_path+"slinglow.wav")
+                self.sound.register_sound('tomcat', sound_path+"tomcat.wav")
+                self.sound.register_sound('launch', sound_path+"launch.wav")
+                self.sound.register_sound('alarm', sound_path+"alarm.wav")
                 self.sound.set_volume(5)
                 # Register lampshow files
 		self.lampshow_keys = []
@@ -295,12 +314,13 @@ class TomcatGame(game.BasicGame):
 		self.lampctrl.register_show('fireleft','./lamps/f14fireleft.lampshow')
                 self.lampctrl.register_show('fireright','./lamps/f14fireright.lampshow')
                 self.lampctrl.register_show('topstrobe','./lamps/topstrobe.lampshow')
+                self.lampctrl.register_show('radarflash','./lamps/radarflash.lampshow')
 
 		self.trough = trough.Trough(game=self)
 		self.base_game_mode = BaseGameMode(game=self)
                 self.effects = effects.Effects(game=self)
                 self.tomcathurryup = F14modes.TomcatHurryup(game=self)
-                self.ramp = ramps.Ramps(game=self)
+                self.ramps = ramps.Ramps(game=self)
                 self.attract_mode = attract.Attract(game=self)
                 self.reset()
 
@@ -325,6 +345,7 @@ class TomcatGame(game.BasicGame):
         def inc_bonusMultiplier(self):
             if self.current_player().bonusMultiplier < 8:
                 self.current_player().bonusMultiplier += 1
+                self.effects.display_text(txt="BONUS",txt2=str(self.current_player().bonusMultiplier)+"X")
                 self.effects.light_bonus()
 
 	# GameController Methods
@@ -334,7 +355,7 @@ class TomcatGame(game.BasicGame):
 	def reset(self):
 		super(TomcatGame,self).reset()
 		self.modes.add(self.trough)
-                self.modes.add(self.ramp)
+                self.modes.add(self.ramps)
                 self.modes.add(self.effects)
                 self.modes.add(self.attract_mode)
 
@@ -370,6 +391,7 @@ class TomcatGame(game.BasicGame):
 		
 		self.enable_flippers(True)
 		self.modes.add(self.base_game_mode)
+                self.current_player().nextkill='alpha'
 
 	def ball_ended(self):
 		"""Called by end_ball(), which is itself called by base_game_mode.trough_changed."""
