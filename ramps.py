@@ -21,12 +21,14 @@ class Ramps(game.Mode):
             self.launchBonusOver()
         else :
             self.game.lampctrl.play_show('topstrobe', repeat=False)
+            self.game.sound.play('launchspeech')
             self.game.effects.display_text(txt="MISSILE",txt2="LAUNCH")
             self.missile_tracking = True
         self.delay(name='kick',event_type=None,delay=1,handler=self.kickvuk)
 
     def kickvuk(self):
         self.game.coils.upKicker.pulse()
+        self.game.sound.play('launch')
 
     def sw_leftCenterEject_active_for_100ms(self,sw):
         self.game.coils.centreLeftEject.pulse()

@@ -301,7 +301,9 @@ class TomcatGame(game.BasicGame):
                 self.sound.register_sound('slinglow', sound_path+"slinglow.wav")
                 self.sound.register_sound('tomcat', sound_path+"tomcat.wav")
                 self.sound.register_sound('launch', sound_path+"launch.wav")
+                self.sound.register_sound('launchspeech', sound_path+"missiles launched speech.wav")
                 self.sound.register_sound('alarm', sound_path+"alarm.wav")
+                self.sound.register_music('dangerzone',sound_path+"Kenny Loggins - Danger Zone.mp3")
                 self.sound.set_volume(5)
                 # Register lampshow files
 		self.lampshow_keys = []
@@ -371,6 +373,7 @@ class TomcatGame(game.BasicGame):
 	def game_started(self):
 		self.log("GAME STARTED")
 		super(TomcatGame, self).game_started()
+                self.sound.play_music('dangerzone')
 		# Don't start_ball() here, since Attract does that after calling start_game().
 	
 	def ball_starting(self):
@@ -411,6 +414,7 @@ class TomcatGame(game.BasicGame):
 		super(TomcatGame, self).game_ended()
 		self.modes.remove(self.base_game_mode)
                 self.modes.add(self.attract_mode)
+                self.sound.fadeout_music(10000)
 
 ## main:
 

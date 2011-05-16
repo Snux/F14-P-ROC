@@ -1,0 +1,4 @@
+# F14 Tomcat Lampshow
+# Strobe the top flashers right then left
+coil:acSelect         | [   ]
+coil:flasher8         |  ...
