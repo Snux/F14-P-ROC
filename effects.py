@@ -81,6 +81,12 @@ class Effects(game.Mode):
     def update_lamps(self):
         self.light_bonus()
 
+    def end_ball(self):
+        print "Effects mode end_ball"
+
+    def ball_ended(self):
+        print "Effects mode ball end"
+        self.display_text(txt="BONUS")
 
 
 

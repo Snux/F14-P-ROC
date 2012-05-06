@@ -134,6 +134,7 @@ class BaseGameMode(game.Mode):
             self.rescueSet(param='set')
             self.game.lamps['kickBack'].enable()
 
+        
         def make_kickBack_inactive(self):
             self.game.current_player().kickBackLit='off'
             self.rescueSet(param='timeout')
@@ -303,8 +304,12 @@ class TomcatGame(game.BasicGame):
                 self.sound.register_sound('launch', sound_path+"launch.wav")
                 self.sound.register_sound('launchspeech', sound_path+"missiles launched speech.wav")
                 self.sound.register_sound('alarm', sound_path+"alarm.wav")
+                self.sound.register_sound('explode1', sound_path+"explode1.wav")
+                self.sound.register_sound('explode2', sound_path+"explode2.wav")
+                self.sound.register_sound('shoot1', sound_path+"shoot1.wav")
                 self.sound.register_music('dangerzone',sound_path+"Kenny Loggins - Danger Zone.mp3")
-                self.sound.set_volume(5)
+                self.sound.music_volume_offset = -0.4
+                self.sound.set_volume(0.8)
                 # Register lampshow files
 		self.lampshow_keys = []
 		key_ctr = 0
@@ -371,7 +376,7 @@ class TomcatGame(game.BasicGame):
 		super(TomcatGame, self).start_ball()
 	
 	def game_started(self):
-		self.log("GAME STARTED")
+		print "Game Started"
 		super(TomcatGame, self).game_started()
                 self.sound.play_music('dangerzone')
 		# Don't start_ball() here, since Attract does that after calling start_game().
@@ -396,10 +401,21 @@ class TomcatGame(game.BasicGame):
 		self.modes.add(self.base_game_mode)
                 self.current_player().nextkill='alpha'
 
+        def end_ball(self):
+            print "Game end_ball1"
+            super(TomcatGame, self).end_ball()
+            print "Game end_ball2"
+
 	def ball_ended(self):
 		"""Called by end_ball(), which is itself called by base_game_mode.trough_changed."""
 		self.log("BALL ENDED")
                 print "End " + self.current_player().name
+                self.effects.ball_ended()
+                print "Calling ball_finished"
+                self.ball_finished()
+
+        def ball_finished(self):
+                print "Finished " + self.current_player().name
                 self.modes.remove(self.base_game_mode)
 		self.enable_flippers(False)
 		super(TomcatGame, self).ball_ended()

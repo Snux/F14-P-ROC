@@ -65,8 +65,8 @@ PRSwitches:
         number: S26
     shooter:
         number: S28
-    startButton:
-        number: S31    
+    #startButton:
+    #    number: S31    
     unused32:
         number: S32
     unused33:

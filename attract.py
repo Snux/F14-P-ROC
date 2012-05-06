@@ -43,10 +43,12 @@ class PrepareToStart(game.Mode):
 	
 	def check_ready(self):
 		"""Perform checks on the system state to see if we are ready to start the game."""
+                print "Checking ready"
 		if self.game.trough.is_full():
+                        print "Ready"
 			self.ready()
 			return True
-		
+		print "Not Ready"
 		return False
 	
 	def pulse_and_delay(self):

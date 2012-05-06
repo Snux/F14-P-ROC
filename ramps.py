@@ -82,8 +82,8 @@ class Ramps(game.Mode):
 
     def sw_slingL_active(self,sw):
         self.game.score(100)
-        self.game.sound.play('slinglow')
+        self.game.sound.play('explode1')
     
     def sw_slingR_active(self,sw):
         self.game.score(100)
-        self.game.sound.play('slinglow')
+        self.game.sound.play('explode2')
